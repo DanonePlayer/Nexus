@@ -42,14 +42,17 @@ cliente = genai.Client(
     ),
 )
 
+EMOCOES = ["neutro", "feliz", "triste", "curioso", "surpreso", "pensativo", "brincalhao"]
+
 ESQUEMA_RESPOSTA = types.Schema(
     type="OBJECT",
     properties={
         "resposta": types.Schema(type="STRING"),
         "lembrar": types.Schema(type="ARRAY", items=types.Schema(type="STRING")),
         "reutilizavel": types.Schema(type="BOOLEAN"),
+        "emocao": types.Schema(type="STRING", enum=EMOCOES),
     },
-    required=["resposta", "lembrar", "reutilizavel"],
+    required=["resposta", "lembrar", "reutilizavel", "emocao"],
 )
 
 
@@ -101,13 +104,31 @@ def perguntar(mensagem):
     return texto
 
 
-def responder(mensagem, historico, memorias):
+def resumir(resumo_anterior, mensagens):
+    conversa = "\n".join(
+        f"{'Usuário' if papel == 'usuario' else 'NEXO'}: {texto}" for papel, texto in mensagens
+    )
+    pedido = (
+        "Você mantém o resumo das conversas antigas do robô NEXO com o dono dele. "
+        "Junte o resumo anterior com as mensagens novas em um único resumo em português, "
+        "com no máximo 8 frases curtas. Guarde assuntos, combinados, pedidos e o tom das conversas; "
+        "descarte cumprimentos e detalhes sem importância. Responda só com o resumo.\n\n"
+        f"# Resumo anterior\n{resumo_anterior or '(nenhum)'}\n\n"
+        f"# Mensagens novas\n{conversa}"
+    )
+    _, texto, _, _ = _gerar(pedido, types.GenerateContentConfig(temperature=0.3))
+    return texto.strip()
+
+
+def responder(mensagem, historico, memorias, resumo=None):
     lembrancas = "\n".join(f"- [{categoria}] {informacao}" for categoria, informacao in memorias)
     instrucao = (
         f"{PERSONALIDADE}\n\n"
         f"# Agora\n{datetime.now():%d/%m/%Y %H:%M}\n\n"
         f"# O que você lembra\n{lembrancas or '(nada ainda)'}"
     )
+    if resumo:
+        instrucao += f"\n\n# Resumo das conversas anteriores\n{resumo}"
 
     contents = [
         types.Content(
@@ -133,6 +154,7 @@ def responder(mensagem, historico, memorias):
         "resposta": texto.strip(),
         "lembrar": [],
         "reutilizavel": False,
+        "emocao": "neutro",
         "pensamento": pensamento,
         "tokens_entrada": getattr(uso, "prompt_token_count", None),
         "tokens_saida": getattr(uso, "candidates_token_count", None),
@@ -146,4 +168,6 @@ def responder(mensagem, historico, memorias):
     resultado["resposta"] = (dados.get("resposta") or "").strip()
     resultado["lembrar"] = [item.strip() for item in dados.get("lembrar", []) if item and item.strip()]
     resultado["reutilizavel"] = bool(dados.get("reutilizavel"))
+    if dados.get("emocao") in EMOCOES:
+        resultado["emocao"] = dados["emocao"]
     return resultado

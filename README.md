@@ -69,17 +69,20 @@ flowchart LR
 ### 💬 Conversa com IA e contexto
 O NEXO conversa por texto usando o Gemini, levando junto a personalidade dele, tudo o que lembra e as últimas 20 mensagens.
 
+### 📝 Resumo das conversas antigas
+Mensagens que saem do histórico recente viram um resumo curto (a cada 20 mensagens), que acompanha as próximas conversas. O NEXO lembra do que foi falado dias atrás sem mandar a conversa inteira para a IA.
+
 ### 🧠 Memória automática
 A cada resposta, a própria IA indica se surgiu um fato novo que vale guardar (seu nome, gostos, rotina...). O NEXO grava sozinho, sem duplicar.
 
 ### ⚡ Cache inteligente de respostas
 Para gastar menos cota e responder mais rápido, cada mensagem segue esta ordem:
 
-1. **Resposta local**: hora e data, sem internet.
+1. **Resposta local**: hora, data, dia da semana, contas (*"quanto é 15 vezes 3"*), cumprimentos, agradecimentos e ajuda, sem internet.
 2. **Banco**: se a mesma pergunta já foi respondida e é atemporal, devolve do banco.
 3. **IA**: só chama o Gemini se não achou nada.
 
-A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Austrália?"* pode, *"tudo bem?"* não.
+A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Austrália?"* pode, *"tudo bem?"* não. Piadas e respostas tristes nunca vão para o cache.
 
 | Origem | Tempo médio |
 |---|---|
@@ -90,8 +93,11 @@ A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Au
 ### 🛡️ Resistente a falhas da API
 Lista de modelos com reserva: se um modelo estiver sobrecarregado (erro 503), o NEXO tenta o próximo, dando até duas voltas na lista.
 
+### 🎭 Emoção em cada resposta
+A IA devolve junto a emoção da resposta (neutro, feliz, triste, curioso, surpreso, pensativo ou brincalhão). Ela já fica gravada e será usada pelos olhos OLED e pelos gestos da cabeça.
+
 ### 📊 Registro completo
-Toda interação fica gravada: pergunta, resposta, origem, modelo usado, tokens e tempo. É a base para análises e aprendizado futuro.
+Toda interação fica gravada: pergunta, resposta, origem, modelo usado, emoção, tokens e tempo. É a base para análises e aprendizado futuro.
 
 ---
 
@@ -123,13 +129,15 @@ nexo/
 ├── core/
 │   ├── inteligencia.py      # Integração com o Gemini (com reservas)
 │   ├── conversa.py          # Loop de conversa: local → banco → IA
-│   └── cache.py             # Normalização, chave de busca e respostas locais
+│   ├── cache.py             # Normalização e chave de busca no banco
+│   └── respostas_locais.py  # Hora, data, contas e conversa simples sem IA
 ├── memory/
-│   ├── memoria.py           # SQLite: memórias, histórico e interações
+│   ├── memoria.py           # SQLite: memórias, histórico, resumos e interações
 │   └── nexo.db              # Banco local (não versionado)
 ├── audio/                   # (em breve) voz
 ├── vision/                  # (em breve) câmera e reconhecimento facial
 ├── hardware/                # (em breve) comunicação com o Arduino
+├── tests/                   # Testes que rodam sem IA
 └── logs/                    # Logs de execução (não versionados)
 ```
 
@@ -158,6 +166,9 @@ chmod 600 .env
 
 # 5. Ligar o NEXO
 python main.py
+
+# Testes (não usam a IA)
+python -m unittest -v
 ```
 
 ### ⚙️ Configurações opcionais (`.env`)
@@ -176,9 +187,11 @@ python main.py
 | Comando | O que faz |
 |---|---|
 | `aprenda: <algo>` | Ensina um fato direto, sem usar IA |
+| `esqueça: <algo>` | Apaga a lembrança que contém esse trecho |
 | `o que você sabe` | Lista tudo o que o NEXO lembra |
 | `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo e tokens |
 | `esquece essa resposta` | Para de reaproveitar a última resposta do banco |
+| `ajuda` | Mostra o que o NEXO sabe fazer |
 | `sair` | Encerra a conversa |
 
 ---
@@ -193,7 +206,7 @@ python main.py
 - [ ] IP fixo (reserva DHCP no roteador)
 - [ ] Iniciar o NEXO automaticamente ao ligar (`systemd`)
 
-### 🧠 Fase 1: Cérebro
+### ✅ Fase 1: Cérebro
 - [x] Memória local em SQLite
 - [x] Integração com Gemini, com modelos de reserva
 - [x] Conversa por texto com contexto e histórico
@@ -202,8 +215,10 @@ python main.py
 - [x] Cache de respostas reaproveitáveis
 - [x] Registro completo de interações
 - [x] Respostas locais (hora e data)
-- [ ] Resumir conversas antigas para economizar tokens
-- [ ] Mais respostas locais e comandos sem IA
+- [x] Resumir conversas antigas para economizar tokens
+- [x] Mais respostas locais e comandos sem IA (contas, cumprimentos, ajuda, `esqueça:`)
+- [x] Emoção em cada resposta (pronta para os olhos e gestos)
+- [x] Testes automáticos sem IA
 
 ### 🗣️ Fase 2: Voz
 - [ ] Identificar e ligar microfone e alto-falante

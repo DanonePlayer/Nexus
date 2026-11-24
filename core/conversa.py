@@ -1,19 +1,25 @@
 import json
 import logging
+import re
 import time
 from pathlib import Path
 
-from core.cache import buscar_no_cache, gerar_chave, normalizar, resposta_local
-from core.inteligencia import IaIndisponivel, responder
+from core.cache import buscar_no_cache, gerar_chave, normalizar
+from core.inteligencia import IaIndisponivel, responder, resumir
+from core.respostas_locais import resposta_local
 from memory.memoria import (
+    apagar_memorias,
     consultar,
     desativar_interacao,
     estatisticas,
     guardar,
     guardar_mensagem,
+    guardar_resumo,
     iniciar_memoria,
+    mensagens_fora_do_historico,
     registrar_interacao,
     ultimas_mensagens,
+    ultimo_resumo,
 )
 
 PASTA_LOGS = Path(__file__).resolve().parent.parent / "logs"
@@ -27,6 +33,10 @@ logging.basicConfig(
 log = logging.getLogger("nexo.conversa")
 
 TAMANHO_HISTORICO = 20
+LOTE_RESUMO = 20
+# Piada repetida perde a graça e tristeza depende do momento: nunca vão para o cache.
+EMOCOES_NAO_REUTILIZAVEIS = {"brincalhao", "triste"}
+COMANDO_APAGAR = re.compile(r"^esque[cç][ae]\s*:\s*(.*)$", re.IGNORECASE)
 COMANDOS_ESQUECER = {"esquece essa resposta", "esqueca essa resposta", "esquece isso", "esqueca isso"}
 
 
@@ -48,33 +58,38 @@ def _mostrar_estatisticas():
 
 
 def _responder_e_registrar(mensagem, normalizado, chave, inicio):
-    local = resposta_local(normalizado)
+    local = resposta_local(mensagem, normalizado)
     if local:
         registrar_interacao(
             pergunta=mensagem, pergunta_normalizada=normalizado, chave=chave,
             resposta=local, origem="local", tempo_ms=_milissegundos(inicio),
         )
-        return local, None, "resposta local"
+        return local, None, "resposta local", None
 
     encontrado = buscar_no_cache(chave)
     if encontrado:
-        id_origem, resposta = encontrado
+        id_origem, resposta, emocao = encontrado
         registrar_interacao(
             pergunta=mensagem, pergunta_normalizada=normalizado, chave=chave,
-            resposta=resposta, origem="cache", cache_de_id=id_origem,
+            resposta=resposta, origem="cache", cache_de_id=id_origem, emocao=emocao,
             tempo_ms=_milissegundos(inicio),
         )
-        return resposta, id_origem, "do banco"
+        return resposta, id_origem, "do banco", emocao
 
     print("NEXO: (pensando...)")
-    resultado = responder(mensagem, ultimas_mensagens(TAMANHO_HISTORICO), consultar())
+    resultado = responder(
+        mensagem, ultimas_mensagens(TAMANHO_HISTORICO), consultar(), ultimo_resumo()[1]
+    )
     novas = [item for item in resultado["lembrar"] if guardar("conversa", item)]
 
-    reutilizavel = resultado["reutilizavel"] and not novas
+    reutilizavel = (
+        resultado["reutilizavel"] and not novas
+        and resultado["emocao"] not in EMOCOES_NAO_REUTILIZAVEIS
+    )
     id_interacao = registrar_interacao(
         pergunta=mensagem, pergunta_normalizada=normalizado, chave=chave,
         resposta=resultado["resposta"], origem="ia", modelo=resultado["modelo"],
-        reutilizavel=int(reutilizavel),
+        reutilizavel=int(reutilizavel), emocao=resultado["emocao"],
         pensamento=resultado["pensamento"],
         memorias_novas=json.dumps(novas, ensure_ascii=False) if novas else None,
         tokens_entrada=resultado["tokens_entrada"], tokens_saida=resultado["tokens_saida"],
@@ -83,16 +98,47 @@ def _responder_e_registrar(mensagem, normalizado, chave, inicio):
 
     if novas:
         print(f"      (guardei na memória: {' | '.join(novas)})")
-    log.info("modelo=%s reutilizavel=%s memorias_novas=%d",
-             resultado["modelo"], resultado["reutilizavel"], len(novas))
-    return resultado["resposta"], id_interacao if reutilizavel else None, resultado["modelo"]
+    log.info("modelo=%s reutilizavel=%s emocao=%s memorias_novas=%d",
+             resultado["modelo"], resultado["reutilizavel"], resultado["emocao"], len(novas))
+    return (resultado["resposta"], id_interacao if reutilizavel else None,
+            resultado["modelo"], resultado["emocao"])
+
+
+def _atualizar_resumo():
+    ate_id, resumo_anterior = ultimo_resumo()
+    pendentes = mensagens_fora_do_historico(ate_id, TAMANHO_HISTORICO)
+    if len(pendentes) < LOTE_RESUMO:
+        return
+    try:
+        novo = resumir(resumo_anterior, [(papel, texto) for _, papel, texto in pendentes])
+    except IaIndisponivel as erro:
+        log.warning("Resumo adiado, IA indisponível: %s", erro)
+        return
+    if novo:
+        guardar_resumo(pendentes[-1][0], novo)
+        log.info("Resumo atualizado até a mensagem %d", pendentes[-1][0])
+
+
+def _apagar_lembranca(trecho):
+    if not trecho:
+        print("NEXO: O que você quer que eu esqueça? Ex.: 'esqueça: motocicletas'")
+        return
+    encontradas = apagar_memorias(trecho)
+    if not encontradas:
+        print("NEXO: Não achei nenhuma lembrança com isso.")
+    elif len(encontradas) == 1:
+        print(f"NEXO: Pronto, esqueci: {encontradas[0][1]}")
+    else:
+        print("NEXO: Achei mais de uma, seja mais específico:")
+        for _, informacao in encontradas:
+            print(f"- {informacao}")
 
 
 def conversar():
     iniciar_memoria()
 
     print("\nNEXO: Olá! Pode falar comigo.")
-    print("NEXO: Comandos: 'aprenda: <algo>', 'o que você sabe', 'estatisticas', 'esquece essa resposta', 'sair'.")
+    print("NEXO: Digite 'ajuda' para ver o que eu sei fazer.")
 
     ultima_resposta_id = None
 
@@ -122,6 +168,11 @@ def conversar():
                 print("NEXO: Isso eu já sabia!")
             continue
 
+        apagar = COMANDO_APAGAR.match(mensagem)
+        if apagar:
+            _apagar_lembranca(apagar.group(1).strip())
+            continue
+
         if "o que voce sabe" in normalizado:
             print("NEXO: Estas são minhas lembranças:")
             for _, informacao in consultar():
@@ -142,7 +193,7 @@ def conversar():
 
         inicio = time.monotonic()
         try:
-            resposta, ultima_resposta_id, fonte = _responder_e_registrar(
+            resposta, ultima_resposta_id, fonte, emocao = _responder_e_registrar(
                 mensagem, normalizado, gerar_chave(normalizado), inicio
             )
         except IaIndisponivel as erro:
@@ -154,7 +205,10 @@ def conversar():
         guardar_mensagem("nexo", resposta)
 
         print(f"NEXO: {resposta}")
-        print(f"      [{fonte} · {_milissegundos(inicio) / 1000:.1f}s]")
+        detalhes = [fonte, f"{_milissegundos(inicio) / 1000:.1f}s"] + ([emocao] if emocao else [])
+        print(f"      [{' · '.join(detalhes)}]")
+
+        _atualizar_resumo()
 
 
 if __name__ == "__main__":

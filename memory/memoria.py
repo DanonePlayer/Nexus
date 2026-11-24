@@ -49,11 +49,22 @@ def iniciar_memoria():
         conexao.execute(
             "CREATE INDEX IF NOT EXISTS idx_interacoes_chave ON interacoes (chave)"
         )
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS resumos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ate_mensagem_id INTEGER NOT NULL,
+                texto TEXT NOT NULL,
+                data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(interacoes)")}
+        if "emocao" not in colunas:
+            conexao.execute("ALTER TABLE interacoes ADD COLUMN emocao TEXT")
 
 
 CAMPOS_INTERACAO = (
     "pergunta", "pergunta_normalizada", "chave", "resposta", "origem", "modelo",
-    "reutilizavel", "cache_de_id", "pensamento", "memorias_novas",
+    "reutilizavel", "emocao", "cache_de_id", "pensamento", "memorias_novas",
     "tokens_entrada", "tokens_saida", "tempo_ms",
 )
 
@@ -73,7 +84,7 @@ def buscar_por_chave(chave):
     with conectar() as conexao:
         return conexao.execute(
             """
-            SELECT id, resposta
+            SELECT id, resposta, emocao
             FROM interacoes
             WHERE chave = ? AND origem = 'ia' AND reutilizavel = 1 AND ativo = 1
             ORDER BY id DESC
@@ -139,6 +150,18 @@ def pesquisar(palavra):
         ).fetchall()
 
 
+def apagar_memorias(trecho):
+    """Apaga as lembranças que contêm o trecho, só se for exatamente uma.
+    Devolve a lista do que foi encontrado, para quem chamou decidir o que dizer."""
+    encontradas = pesquisar(trecho)
+    if len(encontradas) == 1:
+        with conectar() as conexao:
+            conexao.execute(
+                "DELETE FROM memorias WHERE informacao LIKE ?", (f"%{trecho}%",)
+            )
+    return encontradas
+
+
 def guardar_mensagem(papel, texto):
     with conectar() as conexao:
         conexao.execute(
@@ -157,6 +180,37 @@ def ultimas_mensagens(quantidade):
     while linhas and linhas[0][0] != "usuario":
         linhas.pop(0)
     return linhas
+
+
+def ultimo_resumo():
+    with conectar() as conexao:
+        linha = conexao.execute(
+            "SELECT ate_mensagem_id, texto FROM resumos ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    return linha or (0, None)
+
+
+def mensagens_fora_do_historico(depois_do_id, tamanho_historico):
+    """Mensagens depois do último resumo que já saíram do histórico recente."""
+    with conectar() as conexao:
+        return conexao.execute(
+            """
+            SELECT id, papel, texto
+            FROM mensagens
+            WHERE id > ?
+              AND id <= (SELECT COALESCE(MAX(id), 0) FROM mensagens) - ?
+            ORDER BY id
+            """,
+            (depois_do_id, tamanho_historico)
+        ).fetchall()
+
+
+def guardar_resumo(ate_mensagem_id, texto):
+    with conectar() as conexao:
+        conexao.execute(
+            "INSERT INTO resumos (ate_mensagem_id, texto) VALUES (?, ?)",
+            (ate_mensagem_id, texto)
+        )
 
 
 if __name__ == "__main__":
