@@ -1,0 +1,20 @@
+# Chaves e configurações secretas
+.env
+.env.*
+
+# Ambiente Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Banco de memória pessoal
+memory/*.db
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Arquivos temporários
+*.tmp
+*.bak
