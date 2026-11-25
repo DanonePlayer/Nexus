@@ -128,7 +128,7 @@ Toda interação fica gravada: pergunta, resposta, origem, modelo usado, emoçã
 
 | Item | Uso | Situação |
 |---|---|---|
-| Raspberry Pi 3 + microSD 32 GB | Cérebro | ✅ Em uso |
+| Raspberry Pi 3 + microSD 8 GB | Cérebro | ✅ Em uso |
 | Arduino Nano | Controle do corpo | 📦 Disponível |
 | Arduino Uno | Testes | 📦 Disponível |
 | 2× Servo SG90 / MG90S | Cabeça (horizontal e vertical) | 🛒 1 disponível |
@@ -235,7 +235,7 @@ python scripts/carregar_base.py
 - [x] Raspberry Pi OS Lite instalado e acessível por SSH
 - [x] Ambiente Python (`venv`) e SDK do Gemini
 - [x] Repositório no GitHub
-- [ ] Expandir a partição para usar os 32 GB do cartão
+- [x] Partição usando o cartão inteiro (8 GB, já vem expandida)
 - [ ] IP fixo (reserva DHCP no roteador)
 - [ ] Iniciar o NEXO automaticamente ao ligar (`systemd`)
 
