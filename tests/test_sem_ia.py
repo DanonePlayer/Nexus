@@ -1,6 +1,7 @@
 import unittest
 
 from core.cache import filtrar_sugestoes, gerar_chave, normalizar
+from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resolver_conta, resposta_local
 
 
@@ -25,6 +26,47 @@ class TestCache(unittest.TestCase):
         )
 
 
+class TestAbreviacoes(unittest.TestCase):
+    def test_abreviacoes_viram_palavra_inteira(self):
+        self.assertEqual(normalizar("pq o céu é azul?"), normalizar("por que o céu é azul?"))
+        self.assertEqual(normalizar("vc tbm acha q n?"), "voce tambem acha que nao")
+        self.assertEqual(normalizar("qntos ossos"), "quantos ossos")
+
+    def test_mesma_chave_com_abreviacao(self):
+        self.assertEqual(
+            gerar_chave(normalizar("quantos gramas tem um kg"), aprendidas=set()),
+            gerar_chave(normalizar("quantos gramas tem um quilo"), aprendidas=set()),
+        )
+
+    def test_hora_abreviada_e_local(self):
+        self.assertTrue(local("q horas sao").startswith("Agora são"))
+
+
+class TestLembrancas(unittest.TestCase):
+    TODAS = [
+        (1, "identidade", "Meu nome é NEXO."),
+        (2, "essencial", "O criador quer ser chamado de senhor."),
+        (3, "dono", "O criador gosta de motocicletas."),
+        (4, "dono", "O criador gosta de café."),
+        (5, "dono", "O criador tem uma impressora 3D."),
+        (6, "dono", "O criador mexe com Arduino."),
+    ]
+
+    def test_poucas_lembrancas_vao_todas(self):
+        self.assertEqual(len(selecionar_memorias(["oi"], limite=25, todas=self.TODAS)), 6)
+
+    def test_escolhe_essenciais_e_relevantes(self):
+        escolhidas = selecionar_memorias(["qual moto eu devo comprar?"], limite=3, todas=self.TODAS)
+        textos = [informacao for _, informacao in escolhidas]
+        self.assertIn("Meu nome é NEXO.", textos)
+        self.assertIn("O criador quer ser chamado de senhor.", textos)
+        self.assertIn("O criador gosta de motocicletas.", textos)
+
+    def test_completa_com_as_mais_recentes(self):
+        escolhidas = selecionar_memorias(["tudo bem?"], limite=3, todas=self.TODAS)
+        self.assertIn("O criador mexe com Arduino.", [i for _, i in escolhidas])
+
+
 class TestPalavrasAprendidas(unittest.TestCase):
     def test_chave_com_palavra_aprendida(self):
         pergunta = normalizar("nexo, qual é mesmo a capital do japão?")
@@ -38,6 +80,7 @@ class TestPalavrasAprendidas(unittest.TestCase):
     def test_recusa_protegidas_e_inventadas(self):
         pergunta = normalizar("quem não é o presidente do brasil mesmo")
         self.assertEqual(filtrar_sugestoes(["não", "quem", "tipo", "123"], pergunta), set())
+        self.assertEqual(filtrar_sugestoes(["eu"], normalizar("do que eu gosto mesmo")), set())
 
     def test_desconfia_quando_ia_quer_apagar_quase_tudo(self):
         pergunta = normalizar("capital japao tokyo mesmo")

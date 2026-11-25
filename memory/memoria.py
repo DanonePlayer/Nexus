@@ -60,6 +60,11 @@ def iniciar_memoria():
         colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(interacoes)")}
         if "emocao" not in colunas:
             conexao.execute("ALTER TABLE interacoes ADD COLUMN emocao TEXT")
+        # canal: 'conversa' (falando com o NEXO) ou 'carga' (pré-carga do cache)
+        if "canal" not in colunas:
+            conexao.execute(
+                "ALTER TABLE interacoes ADD COLUMN canal TEXT NOT NULL DEFAULT 'conversa'"
+            )
         # Índice parcial: só as respostas que podem sair do cache. A busca vai direto
         # na chave, não importa quantas interações o banco tenha.
         conexao.execute("""
@@ -81,7 +86,7 @@ def iniciar_memoria():
 
 CAMPOS_INTERACAO = (
     "pergunta", "pergunta_normalizada", "chave", "resposta", "origem", "modelo",
-    "reutilizavel", "emocao", "cache_de_id", "pensamento", "memorias_novas",
+    "reutilizavel", "emocao", "canal", "cache_de_id", "pensamento", "memorias_novas",
     "tokens_entrada", "tokens_saida", "tempo_ms",
 )
 
@@ -162,9 +167,37 @@ def interacoes_com_palavra(palavra):
         ).fetchall()
 
 
-def atualizar_chave(id_interacao, chave):
+def atualizar_chave(id_interacao, chave, pergunta_normalizada=None):
     with conectar() as conexao:
-        conexao.execute("UPDATE interacoes SET chave = ? WHERE id = ?", (chave, id_interacao))
+        conexao.execute(
+            "UPDATE interacoes SET chave = ?, "
+            "pergunta_normalizada = COALESCE(?, pergunta_normalizada) WHERE id = ?",
+            (chave, pergunta_normalizada, id_interacao)
+        )
+
+
+def perguntas_do_cache():
+    with conectar() as conexao:
+        return conexao.execute(
+            "SELECT id, pergunta FROM interacoes "
+            "WHERE origem = 'ia' AND reutilizavel = 1 AND ativo = 1"
+        ).fetchall()
+
+
+def consultar_com_id():
+    with conectar() as conexao:
+        return conexao.execute(
+            "SELECT id, categoria, informacao FROM memorias ORDER BY id"
+        ).fetchall()
+
+
+def resumo_economia():
+    with conectar() as conexao:
+        total, sem_ia = conexao.execute(
+            "SELECT COUNT(*), COALESCE(SUM(origem != 'ia'), 0) FROM interacoes "
+            "WHERE canal = 'conversa'"
+        ).fetchone()
+    return total, sem_ia
 
 
 def desativar_interacao(id_interacao):
@@ -182,6 +215,7 @@ def estatisticas():
             SELECT origem, COUNT(*), AVG(tempo_ms),
                    COALESCE(SUM(tokens_entrada), 0), COALESCE(SUM(tokens_saida), 0)
             FROM interacoes
+            WHERE canal = 'conversa'
             GROUP BY origem
             ORDER BY origem
             """

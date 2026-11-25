@@ -6,6 +6,7 @@ from pathlib import Path
 
 from core.cache import aprender_palavras, buscar_no_cache, gerar_chave, normalizar
 from core.inteligencia import IaIndisponivel, responder, resumir
+from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resposta_local
 from memory.memoria import (
     apagar_memorias,
@@ -13,6 +14,7 @@ from memory.memoria import (
     desativar_interacao,
     estatisticas,
     palavras_vazias_resumo,
+    resumo_economia,
     guardar,
     guardar_mensagem,
     guardar_resumo,
@@ -57,6 +59,10 @@ def _mostrar_estatisticas():
         tokens = f", {entrada + saida} tokens" if origem == "ia" else ""
         print(f"- {nomes.get(origem, origem)}: {total} respostas, média {tempo}{tokens}")
 
+    total, sem_ia = resumo_economia()
+    if total:
+        print(f"- Economia: {sem_ia} de {total} respostas ({sem_ia * 100 // total}%) saíram sem usar a IA")
+
     palavras = palavras_vazias_resumo()
     aprendidas = [palavra for palavra, _, ativa in palavras if ativa]
     em_teste = [f"{palavra} ({votos})" for palavra, votos, ativa in palavras if not ativa]
@@ -86,9 +92,9 @@ def _responder_e_registrar(mensagem, normalizado, chave, inicio):
         return resposta, id_origem, "do banco", emocao
 
     print("NEXO: (pensando...)")
-    resultado = responder(
-        mensagem, ultimas_mensagens(TAMANHO_HISTORICO), consultar(), ultimo_resumo()[1]
-    )
+    historico = ultimas_mensagens(TAMANHO_HISTORICO)
+    memorias = selecionar_memorias([mensagem] + [texto for _, texto in historico[-4:]])
+    resultado = responder(mensagem, historico, memorias, ultimo_resumo()[1])
     novas = [item for item in resultado["lembrar"] if guardar("conversa", item)]
 
     reutilizavel = (

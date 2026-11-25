@@ -7,6 +7,7 @@ from memory.memoria import (
     buscar_por_chave,
     interacoes_com_palavra,
     palavras_vazias_aprendidas,
+    perguntas_do_cache,
     votar_palavras,
 )
 
@@ -32,6 +33,20 @@ PALAVRAS_PROTEGIDAS = {
     "quem", "onde", "quando", "como", "porque", "quanto", "quantos", "quanta", "quantas",
     "qual", "quais", "que", "certo", "errado", "verdade", "mentira",
     "entre", "contra", "sobre", "sob", "dentro", "fora", "acima", "abaixo",
+    "eu", "meu", "minha", "meus", "minhas", "ele", "ela", "eles", "elas", "seu", "sua",
+}
+
+# Abreviações de digitação viram a palavra inteira antes de montar a chave.
+# "pq o ceu e azul" e "por que o céu é azul" passam a ser a mesma pergunta.
+ABREVIACOES = {
+    "pq": "porque", "pqe": "porque", "q": "que", "oq": "o que", "n": "nao",
+    "vc": "voce", "vcs": "voces", "tb": "tambem", "tbm": "tambem", "hj": "hoje",
+    "td": "tudo", "tds": "todos", "msm": "mesmo", "mt": "muito", "mto": "muito",
+    "qnd": "quando", "qdo": "quando", "qto": "quanto", "qnto": "quanto", "qnta": "quanta",
+    "qtos": "quantos", "qts": "quantos", "qntos": "quantos", "qnts": "quantos", "qntas": "quantas",
+    "cmg": "comigo", "ctz": "certeza", "blz": "beleza", "obg": "obrigado", "vlw": "valeu",
+    "kg": "quilo", "kgs": "quilos", "km": "quilometro", "kms": "quilometros",
+    "cm": "centimetro", "mm": "milimetro", "ml": "mililitro", "seg": "segundo",
 }
 
 VOTOS_PARA_ATIVAR = 3
@@ -50,7 +65,19 @@ def _palavras_aprendidas():
 def normalizar(texto):
     sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
     sem_pontuacao = re.sub(r"[^a-z0-9 ]", " ", sem_acento.lower())
-    return " ".join(sem_pontuacao.split()).replace("por que", "porque")
+    palavras = [ABREVIACOES.get(palavra, palavra) for palavra in sem_pontuacao.split()]
+    return " ".join(palavras).replace("por que", "porque")
+
+
+def refazer_todas_as_chaves():
+    """Recalcula a chave de todas as respostas do cache a partir da pergunta original.
+    Usar quando a normalização mudar (ex.: abreviações novas)."""
+    refeitas = 0
+    for id_interacao, pergunta in perguntas_do_cache():
+        normalizado = normalizar(pergunta)
+        atualizar_chave(id_interacao, gerar_chave(normalizado), normalizado)
+        refeitas += 1
+    return refeitas
 
 
 def gerar_chave(normalizado, aprendidas=None):

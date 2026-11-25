@@ -75,6 +75,8 @@ Mensagens que saem do histórico recente viram um resumo curto (a cada 20 mensag
 ### 🧠 Memória automática
 A cada resposta, a própria IA indica se surgiu um fato novo que vale guardar (seu nome, gostos, rotina...). O NEXO grava sozinho, sem duplicar.
 
+Para não pesar quando a memória crescer, só vão para a IA as lembranças que importam. Até 25, vão todas. Depois disso vão as **essenciais** (nome, como quer ser chamado), as que têm palavras em comum com a conversa (*"moto"* puxa *"gosta de motocicletas"*) e as mais recentes.
+
 ### ⚡ Cache inteligente de respostas
 Para gastar menos cota e responder mais rápido, cada mensagem segue esta ordem:
 
@@ -97,6 +99,8 @@ Para achar a pergunta no banco, o NEXO tira as palavras que não mudam o sentido
 "Qual a capital do Japão?"                →  capital japao qual
 "nexo, qual é mesmo a capital do japão?"  →  capital japao qual   ← acha no banco
 ```
+
+Abreviações de digitação viram a palavra inteira antes: *"pq"*, *"q"*, *"n"*, *"vc"*, *"tbm"*, *"qntos"*, *"kg"*... Então *"pq o céu é azul"* acha a mesma resposta de *"por que o céu é azul?"*.
 
 Além da lista fixa, ele **aprende sozinho**: na mesma chamada da resposta, a IA aponta as palavras de enfeite da pergunta (*"mesmo"*, *"tipo"*, *"aí"*). Cada sugestão é um voto, e a palavra só passa a ser ignorada com **3 votos**. Quando isso acontece, as chaves antigas são refeitas.
 
@@ -147,7 +151,8 @@ nexo/
 │   ├── inteligencia.py      # Integração com o Gemini (com reservas)
 │   ├── conversa.py          # Loop de conversa: local → banco → IA
 │   ├── cache.py             # Normalização e chave de busca no banco
-│   └── respostas_locais.py  # Hora, data, contas e conversa simples sem IA
+│   ├── respostas_locais.py  # Hora, data, contas e conversa simples sem IA
+│   └── lembrancas.py        # Escolhe as lembranças relevantes para cada conversa
 ├── memory/
 │   ├── memoria.py           # SQLite: memórias, histórico, resumos e interações
 │   └── nexo.db              # Banco local (não versionado)
@@ -213,7 +218,7 @@ python scripts/carregar_base.py
 | `aprenda: <algo>` | Ensina um fato direto, sem usar IA |
 | `esqueça: <algo>` | Apaga a lembrança que contém esse trecho |
 | `o que você sabe` | Lista tudo o que o NEXO lembra |
-| `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo, tokens e palavras aprendidas |
+| `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo, tokens, % de economia e palavras aprendidas |
 | `esquece essa resposta` | Para de reaproveitar a última resposta do banco |
 | `ajuda` | Mostra o que o NEXO sabe fazer |
 | `sair` | Encerra a conversa |
@@ -245,6 +250,9 @@ python scripts/carregar_base.py
 - [x] Respostas locais para ontem, amanhã e depois de amanhã
 - [x] Aprende palavras de enfeite com a IA (votos + lista protegida)
 - [x] Índice do cache pronto para muitos dados
+- [x] Entende abreviações de digitação (pq, q, n, vc, tbm...)
+- [x] Envia só as lembranças relevantes (pronto para memória grande)
+- [x] Taxa de economia nas estatísticas
 - [x] Pré-carga do cache com perguntas comuns (matemática, ciências, geografia, tecnologia, cotidiano)
 - [x] Testes automáticos sem IA
 

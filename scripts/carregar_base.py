@@ -16,7 +16,8 @@ from core.cache import aprender_palavras, buscar_no_cache, gerar_chave, normaliz
 from core.conversa import EMOCOES_NAO_REUTILIZAVEIS  # noqa: E402
 from core.inteligencia import IaIndisponivel, responder  # noqa: E402
 from core.respostas_locais import resposta_local  # noqa: E402
-from memory.memoria import consultar, iniciar_memoria, registrar_interacao  # noqa: E402
+from core.lembrancas import selecionar_memorias  # noqa: E402
+from memory.memoria import iniciar_memoria, registrar_interacao  # noqa: E402
 
 PAUSA_ENTRE_CHAMADAS = 5
 FALHAS_SEGUIDAS_PARA_PARAR = 5
@@ -49,7 +50,7 @@ def carregar(arquivo):
 
         inicio = time.monotonic()
         try:
-            resultado = responder(pergunta, [], consultar())
+            resultado = responder(pergunta, [], selecionar_memorias([pergunta]))
         except IaIndisponivel as erro:
             contagem["falha"] += 1
             falhas_seguidas += 1
@@ -67,7 +68,7 @@ def carregar(arquivo):
         registrar_interacao(
             pergunta=pergunta, pergunta_normalizada=normalizado, chave=chave,
             resposta=resultado["resposta"], origem="ia", modelo=resultado["modelo"],
-            reutilizavel=int(reutilizavel), emocao=resultado["emocao"],
+            reutilizavel=int(reutilizavel), emocao=resultado["emocao"], canal="carga",
             pensamento=resultado["pensamento"],
             tokens_entrada=resultado["tokens_entrada"], tokens_saida=resultado["tokens_saida"],
             tempo_ms=int((time.monotonic() - inicio) * 1000),
