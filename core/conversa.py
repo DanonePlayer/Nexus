@@ -1,6 +1,8 @@
 import json
 import logging
 import re
+import readline  # noqa: F401  (apaga acentos direito, setas e histórico com ↑)
+import sys
 import time
 from pathlib import Path
 
@@ -177,6 +179,8 @@ def _apagar_lembranca(trecho):
 
 def conversar():
     iniciar_memoria()
+    # Nunca quebrar por um byte inválido vindo do terminal: vira "\ufffd" e pedimos de novo.
+    sys.stdin.reconfigure(errors="replace")
 
     print("\nNEXO: Olá! Pode falar comigo.")
     print("NEXO: Digite 'ajuda' para ver o que eu sei fazer.")
@@ -191,6 +195,10 @@ def conversar():
             break
 
         if not mensagem:
+            continue
+
+        if "\ufffd" in mensagem:
+            print("NEXO: Alguns caracteres chegaram quebrados. Pode digitar de novo?")
             continue
 
         normalizado = normalizar(mensagem)
