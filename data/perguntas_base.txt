@@ -182,3 +182,314 @@ quanto tempo dura uma pilha
 o que fazer quando o celular esquenta
 como fazer um nó de gravata
 como fazer uma boa senha
+
+# ===== Lote 2 =====
+
+# Matemática do dia a dia
+como calcular desconto de uma compra
+como calcular o troco
+como calcular quanto rende uma aplicação
+o que é taxa selic
+o que é inflação
+o que é ipca
+como calcular o consumo de combustível do carro
+como calcular quantos km faz por litro
+como calcular a média das notas
+como dividir uma conta entre amigos
+o que é uma fração equivalente
+como transformar fração em porcentagem
+como transformar decimal em fração
+o que é uma equação do primeiro grau
+como resolver uma equação do primeiro grau
+o que é uma inequação
+o que é um sistema de equações
+o que é notação científica
+o que é um número inteiro
+o que é um número natural
+o que é um número racional
+o que é valor absoluto
+o que é raiz cúbica
+qual a raiz cúbica de 27
+o que é mmc e mdc
+
+# Matemática avançada 2
+o que é a regra da cadeia
+o que é derivada parcial
+o que é uma série de taylor
+o que é um número de euler
+quanto vale o número de euler
+o que é a sequência de fibonacci
+o que é a proporção áurea
+o que é trigonometria
+o que é o círculo trigonométrico
+o que é radiano
+o que é uma matriz identidade
+o que é uma matriz inversa
+o que é álgebra linear
+o que é um autovalor
+o que é geometria analítica
+o que é a equação da reta
+o que é uma parábola
+o que é uma hipérbole
+o que é uma elipse
+o que é teoria dos conjuntos
+o que é lógica matemática
+o que é um teorema
+o que é uma demonstração matemática
+o que é o infinito na matemática
+o que é distribuição normal
+o que é média ponderada
+o que é variância
+o que é correlação
+o que é regressão linear
+o que é o teorema de bayes
+o que é sistema binário
+como converter decimal para binário
+o que é sistema hexadecimal
+
+# Física
+o que é velocidade média
+como calcular velocidade média
+o que é aceleração
+o que é a primeira lei de newton
+o que é a segunda lei de newton
+o que é a terceira lei de newton
+o que é energia cinética
+o que é energia potencial
+o que é trabalho na física
+o que é potência na física
+o que é atrito
+o que é inércia
+o que é massa e peso
+qual a aceleração da gravidade na terra
+o que é pressão
+o que é temperatura
+o que é calor
+o que é o zero absoluto
+o que é magnetismo
+o que é um imã
+o que é corrente alternada e contínua
+o que é um resistor
+o que é um capacitor
+o que é um diodo
+o que é um led
+o que é um transistor
+o que é um curto circuito
+o que é aterramento
+o que é watt
+o que é volt
+o que é ampere
+o que é ohm
+o que é frequência
+o que é hertz
+o que é onda sonora
+o que é a teoria da relatividade
+
+# Química e biologia
+o que é a tabela periódica
+quantos elementos tem a tabela periódica
+o que é uma molécula
+o que é ph
+o que é um ácido
+o que é uma base na química
+qual o elemento mais abundante do universo
+o que é oxigênio
+o que é gás carbônico
+o que é uma célula
+o que é uma bactéria
+o que é um vírus
+qual a diferença entre vírus e bactéria
+o que é o sistema imunológico
+o que é uma vacina
+quantos litros de sangue tem o corpo humano
+qual a temperatura normal do corpo humano
+o que é metabolismo
+o que é proteína
+o que é carboidrato
+o que é vitamina c
+o que é colesterol
+o que é glicose
+quantas calorias um adulto precisa por dia
+o que é evolução das espécies
+quem foi charles darwin
+
+# Espaço
+o que é uma estrela
+o que é o sol
+o que é uma galáxia
+qual o nome da nossa galáxia
+o que é um ano luz
+o que é a via láctea
+o que é um cometa
+o que é um meteoro
+o que é um eclipse
+por que a lua muda de fase
+quanto tempo a luz do sol leva para chegar na terra
+quem foi o primeiro homem a ir à lua
+o que é a estação espacial internacional
+qual o planeta mais próximo do sol
+qual o planeta mais quente do sistema solar
+marte tem água
+o que é o big bang
+
+# Geografia 2
+qual a capital da itália
+qual a capital da espanha
+qual a capital da inglaterra
+qual a capital do canadá
+qual a capital do méxico
+qual a capital do chile
+qual a capital do uruguai
+qual a capital do paraguai
+qual a capital da china
+qual a capital da rússia
+qual a capital da índia
+qual a capital do egito
+qual a capital de santa catarina
+qual a capital do paraná
+qual a capital do rio grande do sul
+qual a capital de são paulo
+qual a capital de minas gerais
+qual a capital da bahia
+qual o maior oceano do mundo
+qual o maior deserto do mundo
+qual o país mais populoso do mundo
+quantos países existem no mundo
+qual a maior cidade do brasil
+qual o menor país do mundo
+o que é a linha do equador
+o que é fuso horário
+quantos fusos horários tem o brasil
+
+# História 2
+quando começou a primeira guerra mundial
+quando começou a segunda guerra mundial
+quando terminou a segunda guerra mundial
+quem foi napoleão bonaparte
+quem foi tiradentes
+quando foi proclamada a república no brasil
+quando foi a abolição da escravatura no brasil
+quem foi dom pedro i
+o que foi a revolução industrial
+o que foi a revolução francesa
+quem inventou o telefone
+quem inventou o avião
+quem inventou a internet
+quem inventou o computador
+quem foi alan turing
+quem foi nikola tesla
+quem foi isaac newton
+quem foi galileu galilei
+quem foi leonardo da vinci
+
+# Tecnologia 2
+o que é programação
+o que é uma linguagem de programação
+o que é javascript
+o que é typescript
+o que é react
+o que é spring boot
+o que é html
+o que é css
+o que é um framework
+o que é uma biblioteca na programação
+o que é orientação a objetos
+o que é ddd na programação
+o que é uma variável na programação
+o que é uma função na programação
+o que é um loop
+o que é recursão
+o que é um bug
+o que é debug
+o que é um servidor
+o que é docker
+o que é um container
+o que é kubernetes
+o que é uma vpn
+o que é um roteador
+o que é dns
+o que é http
+o que é https
+o que é ssh
+o que é json
+o que é sqlite
+o que é machine learning
+o que é uma rede neural
+o que é um modelo de linguagem
+o que é um token na inteligência artificial
+o que é um prompt
+o que é o gemini
+o que é open source
+o que é um sistema operacional
+o que é memória ram
+o que é um processador
+o que é um ssd
+o que é um gpio no raspberry pi
+o que é pwm
+o que é um protoboard
+o que é solda
+o que é um multímetro
+o que é um motor de passo
+o que é um driver de motor
+o que é uma bateria de lítio
+o que é um regulador de tensão
+o que é uma fonte de alimentação
+o que é usb
+o que é bluetooth
+o que é um microfone usb
+o que é reconhecimento facial
+o que é visão computacional
+o que é opencv
+o que é text to speech
+o que é speech to text
+
+# Motos 2
+o que é uma moto naked
+o que é uma moto trail
+o que é uma moto esportiva
+o que é uma moto custom
+o que é embreagem
+como trocar de marcha na moto
+o que é o cárter
+o que é a vela de ignição
+para que serve o filtro de ar
+o que é a pastilha de freio
+quando trocar o pneu da moto
+o que é o kit relação
+como fazer a revisão da moto
+o que é pilotagem defensiva
+qual equipamento de segurança usar na moto
+o que é cnh categoria a
+
+# Cotidiano 2
+como fazer pão caseiro
+como fazer bolo simples
+como fazer feijão
+como fazer macarrão
+como fazer pipoca
+como fazer café na prensa francesa
+como guardar comida na geladeira
+quanto tempo dura comida na geladeira
+como limpar a tela do celular
+como limpar o teclado do computador
+como economizar água
+como organizar a rotina
+como dormir melhor
+como ter mais foco
+como lidar com o estresse
+como fazer alongamento
+quantos passos andar por dia
+como manter a postura no computador
+como cuidar de uma planta
+como tirar o cheiro da geladeira
+como passar roupa
+como lavar tênis
+como fazer um currículo
+como se preparar para uma entrevista de emprego
+como fazer uma planilha de gastos
+o que é reserva de emergência
+como economizar dinheiro
+o que é cartão de crédito rotativo
+o que é pix
+o que é cdb
+o que é tesouro direto

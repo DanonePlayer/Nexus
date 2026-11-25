@@ -198,7 +198,7 @@ python main.py
 # Testes (não usam a IA)
 python -m unittest -v
 
-# Opcional: pré-carregar o cache com ~160 perguntas comuns (≈20 min)
+# Opcional: pré-carregar o cache com ~450 perguntas comuns (≈50 min; as que já estão no banco são puladas)
 python scripts/carregar_base.py
 ```
 
