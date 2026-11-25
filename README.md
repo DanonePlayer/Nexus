@@ -154,6 +154,10 @@ nexo/
 ├── audio/                   # (em breve) voz
 ├── vision/                  # (em breve) câmera e reconhecimento facial
 ├── hardware/                # (em breve) comunicação com o Arduino
+├── data/
+│   └── perguntas_base.txt   # Perguntas para pré-carregar o cache
+├── scripts/
+│   └── carregar_base.py     # Pré-carga do cache
 ├── tests/                   # Testes que rodam sem IA
 └── logs/                    # Logs de execução (não versionados)
 ```
@@ -186,6 +190,9 @@ python main.py
 
 # Testes (não usam a IA)
 python -m unittest -v
+
+# Opcional: pré-carregar o cache com ~160 perguntas comuns (≈20 min)
+python scripts/carregar_base.py
 ```
 
 ### ⚙️ Configurações opcionais (`.env`)
@@ -238,6 +245,7 @@ python -m unittest -v
 - [x] Respostas locais para ontem, amanhã e depois de amanhã
 - [x] Aprende palavras de enfeite com a IA (votos + lista protegida)
 - [x] Índice do cache pronto para muitos dados
+- [x] Pré-carga do cache com perguntas comuns (matemática, ciências, geografia, tecnologia, cotidiano)
 - [x] Testes automáticos sem IA
 
 ### 🗣️ Fase 2: Voz

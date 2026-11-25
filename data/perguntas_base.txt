@@ -1,0 +1,184 @@
+# Perguntas para pré-carregar o cache do NEXO (uma por linha, # é comentário)
+
+# Matemática básica
+quanto é a raiz quadrada de 144
+qual a raiz quadrada de 2
+o que é um número primo
+quais são os números primos até 50
+o que é fração
+como somar frações com denominadores diferentes
+o que é porcentagem
+como calcular porcentagem
+como calcular 15% de um valor
+o que é regra de três
+como fazer regra de três
+o que é mínimo múltiplo comum
+o que é máximo divisor comum
+o que é número par e número ímpar
+o que é um número decimal
+o que é potência na matemática
+qual a diferença entre média, moda e mediana
+como calcular a média aritmética
+quanto vale pi
+o que é número irracional
+o que é número negativo
+
+# Geometria
+como calcular a área de um quadrado
+como calcular a área de um retângulo
+como calcular a área de um triângulo
+como calcular a área de um círculo
+como calcular o perímetro de um círculo
+como calcular o volume de um cubo
+como calcular o volume de um cilindro
+o que é o teorema de pitágoras
+quanto somam os ângulos internos de um triângulo
+o que é um ângulo reto
+o que é hipotenusa
+quantos lados tem um hexágono
+quantos lados tem um octógono
+
+# Matemática avançada
+o que é uma equação do segundo grau
+o que é a fórmula de bhaskara
+o que é logaritmo
+o que é uma função na matemática
+o que é uma função exponencial
+o que é uma derivada
+para que serve a derivada
+o que é uma integral
+o que é limite em cálculo
+o que é uma matriz
+como calcular o determinante de uma matriz 2x2
+o que é seno, cosseno e tangente
+o que é probabilidade
+como calcular probabilidade
+o que é análise combinatória
+o que é fatorial
+quanto é 5 fatorial
+o que é progressão aritmética
+o que é progressão geométrica
+o que são números complexos
+o que é um vetor
+o que é estatística
+o que é desvio padrão
+o que é juros compostos
+qual a diferença entre juros simples e compostos
+
+# Conversões
+quantos centímetros tem um metro
+quantos metros tem um quilômetro
+quantos centímetros tem uma polegada
+quantos quilômetros tem uma milha
+quantos gramas tem um quilo
+quantos mililitros tem um litro
+quantos segundos tem uma hora
+quantos minutos tem um dia
+quantos dias tem um ano bissexto
+quantas semanas tem um ano
+como converter celsius para fahrenheit
+quantos bytes tem um kilobyte
+quantos megabytes tem um gigabyte
+
+# Ciências
+por que o céu é azul
+o que é a fotossíntese
+qual a fórmula da água
+qual a velocidade da luz
+qual a velocidade do som
+o que é gravidade
+quantos planetas tem o sistema solar
+qual o maior planeta do sistema solar
+qual a distância da terra até a lua
+qual a distância da terra até o sol
+o que é um átomo
+o que é dna
+quantos ossos tem o corpo humano
+qual o maior órgão do corpo humano
+a que temperatura a água ferve
+o que é eletricidade
+qual a diferença entre corrente e tensão
+o que é a lei de ohm
+o que é um buraco negro
+
+# Geografia e história
+qual a capital do brasil
+qual a capital da argentina
+qual a capital de portugal
+qual a capital dos estados unidos
+qual a capital da frança
+qual a capital da alemanha
+qual a capital do japão
+qual a capital da austrália
+qual a capital da áustria
+qual o maior país do mundo
+qual o maior país da américa do sul
+qual o maior rio do mundo
+qual a montanha mais alta do mundo
+quantos estados tem o brasil
+qual o maior estado do brasil
+quantos continentes existem
+quem descobriu o brasil
+em que ano o brasil foi descoberto
+quando foi a independência do brasil
+quem foi santos dumont
+quem inventou a lâmpada
+quem foi albert einstein
+
+# Língua portuguesa
+quando usar mas e mais
+qual a diferença entre porque, por que, porquê e por quê
+quando usar há e a
+o que é um verbo
+o que é um substantivo
+o que é um adjetivo
+o que é crase
+o que é sinônimo e antônimo
+
+# Tecnologia
+o que é inteligência artificial
+o que é um algoritmo
+o que é python
+o que é java
+o que é uma api
+o que é um banco de dados
+o que é sql
+o que é o raspberry pi
+o que é um arduino
+o que é um servo motor
+o que é um microcontrolador
+o que é um sensor ultrassônico
+o que é i2c
+o que é comunicação serial
+o que é wifi
+o que é um endereço ip
+o que é linux
+o que é git
+o que é a nuvem na computação
+o que é um display oled
+o que é impressão 3d
+o que é pla na impressão 3d
+
+# Motos
+o que é cilindrada de moto
+a cada quantos quilômetros trocar o óleo da moto
+como calibrar o pneu da moto
+o que é a relação da moto
+para que serve o freio abs na moto
+qual a diferença entre moto carburada e injetada
+como lubrificar a corrente da moto
+
+# Cotidiano
+como fazer café coado
+quantas horas de sono um adulto precisa
+quanta água devo beber por dia
+como tirar mancha de café da roupa
+como cozinhar arroz
+quanto tempo cozinhar um ovo
+como fazer ovo cozido
+como desentupir uma pia
+como economizar energia em casa
+quanto tempo dura uma pilha
+o que fazer quando o celular esquenta
+como fazer um nó de gravata
+como fazer uma boa senha
