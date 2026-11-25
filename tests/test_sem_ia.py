@@ -1,6 +1,8 @@
 import unittest
 
-from core.cache import encontrar_colisao, filtrar_sugestoes, gerar_chave, mesmo_sentido, normalizar
+from core.cache import (
+    encontrar_colisao, filtrar_sugestoes, gerar_chave, mesmo_sentido, normalizar, pode_ir_para_cache,
+)
 from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resolver_conta, resposta_local
 
@@ -126,6 +128,31 @@ class TestContas(unittest.TestCase):
         for pergunta, esperado in casos.items():
             with self.subTest(pergunta=pergunta):
                 self.assertEqual(resolver_conta(pergunta), esperado)
+
+    def test_conta_solta(self):
+        casos = {"1+2 ?": "Dá 3.", "20+14?": "Dá 34.", "3 x 4 =": "Dá 12.", "(2+3)*4": "Dá 20.",
+                 "10/4": "Dá 2,5.", "nexo, 7-10?": "Dá -3."}
+        for pergunta, esperado in casos.items():
+            with self.subTest(pergunta=pergunta):
+                self.assertEqual(local(pergunta), esperado)
+
+    def test_numero_sozinho_nao_e_conta(self):
+        for pergunta in ["2024", "42?", "1,5"]:
+            with self.subTest(pergunta=pergunta):
+                self.assertIsNone(resolver_conta(pergunta))
+
+    def test_travas_do_cache(self):
+        def pode(texto):
+            n = normalizar(texto)
+            return pode_ir_para_cache(n, gerar_chave(n, aprendidas=set()))
+        self.assertFalse(pode("memoria"))
+        self.assertFalse(pode("quanto é 10 - 2 elevado a raiz"))
+        self.assertTrue(pode("qual a capital do Japão?"))
+        self.assertTrue(pode("como calcular o determinante de uma matriz 2x2"))
+
+    def test_operadores_mudam_a_chave(self):
+        chaves = {gerar_chave(normalizar(c), aprendidas=set()) for c in ["1+2", "1-2", "1*2", "1/2"]}
+        self.assertEqual(len(chaves), 4)
 
     def test_nao_e_conta(self):
         for pergunta in ["quanto é o dólar hoje", "quanto custa um raspberry",

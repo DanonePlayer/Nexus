@@ -12,7 +12,9 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
 
-from core.cache import aprender_palavras, buscar_no_cache, gerar_chave, normalizar  # noqa: E402
+from core.cache import (  # noqa: E402
+    aprender_palavras, buscar_no_cache, gerar_chave, normalizar, pode_ir_para_cache,
+)
 from core.conversa import EMOCOES_NAO_REUTILIZAVEIS  # noqa: E402
 from core.inteligencia import IaIndisponivel, responder  # noqa: E402
 from core.respostas_locais import resposta_local  # noqa: E402
@@ -64,6 +66,7 @@ def carregar(arquivo):
 
         reutilizavel = (
             resultado["reutilizavel"] and resultado["emocao"] not in EMOCOES_NAO_REUTILIZAVEIS
+            and pode_ir_para_cache(normalizado, chave)
         )
         registrar_interacao(
             pergunta=pergunta, pergunta_normalizada=normalizado, chave=chave,

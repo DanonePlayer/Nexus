@@ -33,6 +33,7 @@ IDENTIDADE = re.compile(r"(nexo )?(quem e voce|qual (e )?(o )?seu nome|como voce
 AJUDA = re.compile(r"(ajuda|comandos|o que voce faz|me ajuda)")
 
 PEDIDO_CONTA = re.compile(r"^\s*(?:nexo,?\s*)?(?:quanto (?:e|é|da|dá)|calcul[ae])\s+(.+?)\s*\??\s*$")
+CONTA_SOLTA = re.compile(r"^\s*(?:nexo,?\s*)?([\d\s.,()+\-*/x×÷^%]+?)\s*=?\s*\??\s*$")
 PALAVRAS_OPERADORES = [
     (r"\bdividido por\b", "/"), (r"\belevado a\b", "**"), (r"\bmultiplicado por\b", "*"),
     (r"\bvezes\b", "*"), (r"\bmais\b", "+"), (r"\bmenos\b", "-"),
@@ -83,11 +84,22 @@ def _formatar_numero(valor):
     return f"{valor:.4f}".rstrip("0").replace(".", ",")
 
 
+def _expressao_do_pedido(mensagem):
+    pedido = PEDIDO_CONTA.match(mensagem)
+    if pedido:
+        return pedido.group(1)
+    # Conta solta, sem "quanto é": "20+14?", "3 x 4 =". Precisa ter um operador
+    # entre números para não confundir com um número sozinho (ex.: um ano).
+    solta = CONTA_SOLTA.match(mensagem)
+    if solta and re.search(r"\d\s*[-+*/x×÷^%]\s*[\d(]", solta.group(1)):
+        return solta.group(1)
+    return None
+
+
 def resolver_conta(mensagem):
-    pedido = PEDIDO_CONTA.match(mensagem.lower())
-    if not pedido:
+    expressao = _expressao_do_pedido(mensagem.lower())
+    if not expressao:
         return None
-    expressao = pedido.group(1)
     for padrao, simbolo in PALAVRAS_OPERADORES:
         expressao = re.sub(padrao, simbolo, expressao)
     expressao = re.sub(r"(?<=\d),(?=\d)", ".", expressao)

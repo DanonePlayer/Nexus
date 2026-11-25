@@ -53,6 +53,16 @@ ABREVIACOES = {
     "cm": "centimetro", "mm": "milimetro", "ml": "mililitro", "seg": "segundo",
 }
 
+# Símbolos de conta viram palavra: senão "1+2" e "1-2" teriam a mesma chave ("1 2").
+SIMBOLOS_MATEMATICOS = [
+    (r"\+", " mais "), (r"(?<=\d)\s*-\s*(?=\d)", " menos "), (r"[*×]", " vezes "),
+    (r"(?<=\d)\s*x\s*(?=\d)", " vezes "), (r"[/÷]", " dividido "), (r"\^", " elevado "),
+    (r"%", " porcento "), (r"=", " igual "),
+]
+
+MINIMO_PALAVRAS_CHAVE = 2
+OPERADORES_QUE_DEPENDEM_DA_ORDEM = {"menos", "dividido", "elevado"}
+
 VOTOS_PARA_ATIVAR = 3
 SIMILARIDADE_MINIMA = 0.5
 TAMANHO_MAXIMO_PALAVRA = 20
@@ -68,6 +78,9 @@ def _palavras_aprendidas():
 
 
 def normalizar(texto):
+    texto = texto.lower()
+    for padrao, palavra in SIMBOLOS_MATEMATICOS:
+        texto = re.sub(padrao, palavra, texto)
     sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
     sem_pontuacao = re.sub(r"[^a-z0-9 ]", " ", sem_acento.lower())
     palavras = [ABREVIACOES.get(palavra, palavra) for palavra in sem_pontuacao.split()]
@@ -88,6 +101,18 @@ def refazer_todas_as_chaves():
 def gerar_chave(normalizado, aprendidas=None):
     ignorar = PALAVRAS_VAZIAS | (_palavras_aprendidas() if aprendidas is None else aprendidas)
     return " ".join(sorted({p for p in normalizado.split() if p not in ignorar}))
+
+
+def pode_ir_para_cache(normalizado, chave):
+    """Travas do código, valem mesmo que a IA diga que a resposta é reaproveitável."""
+    # Uma palavra só ("memoria", "isso") é ambígua: a resposta depende da conversa.
+    if len(chave.split()) < MINIMO_PALAVRAS_CHAVE:
+        return False
+    # A chave ordena as palavras, então "10-2" e "2-10" teriam a mesma chave.
+    palavras = set(normalizado.split())
+    if re.search(r"\d", normalizado) and palavras & OPERADORES_QUE_DEPENDEM_DA_ORDEM:
+        return False
+    return True
 
 
 def buscar_no_cache(chave):

@@ -4,7 +4,9 @@ import re
 import time
 from pathlib import Path
 
-from core.cache import aprender_palavras, buscar_no_cache, desaprender, gerar_chave, normalizar
+from core.cache import (
+    aprender_palavras, buscar_no_cache, desaprender, gerar_chave, normalizar, pode_ir_para_cache,
+)
 from core.inteligencia import IaIndisponivel, responder, resumir
 from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resposta_local
@@ -40,6 +42,13 @@ LOTE_RESUMO = 20
 # Piada repetida perde a graça e tristeza depende do momento: nunca vão para o cache.
 EMOCOES_NAO_REUTILIZAVEIS = {"brincalhao", "triste"}
 COMANDO_DESAPRENDER = re.compile(r"^desaprend[ae]\s*:\s*(.*)$", re.IGNORECASE)
+PEDIDO_MEMORIA = re.compile(
+    r"(nexo )?("
+    r"(sua |a )?memoria|(suas |as )?lembrancas"
+    r"|o que voce (sabe|lembra)( de mim| sobre mim)?"
+    r"|(me )?(mostra|mostre|ver|lista|liste|quais sao)( a| sua| as| suas)? (memoria|lembrancas)"
+    r")"
+)
 COMANDO_APAGAR = re.compile(r"^esque[cç][ae]\s*:\s*(.*)$", re.IGNORECASE)
 COMANDOS_ESQUECER = {"esquece essa resposta", "esqueca essa resposta", "esquece isso", "esqueca isso"}
 
@@ -113,6 +122,7 @@ def _responder_e_registrar(mensagem, normalizado, chave, inicio):
     reutilizavel = (
         resultado["reutilizavel"] and not novas
         and resultado["emocao"] not in EMOCOES_NAO_REUTILIZAVEIS
+        and pode_ir_para_cache(normalizado, chave)
     )
     id_interacao = registrar_interacao(
         pergunta=mensagem, pergunta_normalizada=normalizado, chave=chave,
@@ -219,7 +229,7 @@ def conversar():
             _apagar_lembranca(apagar.group(1).strip())
             continue
 
-        if "o que voce sabe" in normalizado:
+        if PEDIDO_MEMORIA.fullmatch(normalizado):
             print("NEXO: Estas são minhas lembranças:")
             for _, informacao in consultar():
                 print(f"- {informacao}")

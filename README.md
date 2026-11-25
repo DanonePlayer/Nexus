@@ -80,11 +80,11 @@ Para não pesar quando a memória crescer, só vão para a IA as lembranças que
 ### ⚡ Cache inteligente de respostas
 Para gastar menos cota e responder mais rápido, cada mensagem segue esta ordem:
 
-1. **Resposta local**: hora, data, dia da semana, ontem, amanhã, contas (*"quanto é 15 vezes 3"*), cumprimentos, agradecimentos e ajuda, sem internet.
+1. **Resposta local**: hora, data, dia da semana, ontem, amanhã, contas (*"quanto é 15 vezes 3"*, *"20+14?"*), cumprimentos, agradecimentos e ajuda, sem internet.
 2. **Banco**: se a mesma pergunta já foi respondida e é atemporal, devolve do banco.
 3. **IA**: só chama o Gemini se não achou nada.
 
-A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Austrália?"* pode, *"tudo bem?"* não. Piadas e respostas tristes nunca vão para o cache.
+A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Austrália?"* pode, *"tudo bem?"* não. E o código tem travas que valem mesmo se a IA errar: piadas, respostas tristes, perguntas de uma palavra só (*"memória"*) e contas em que a ordem importa (*"10-2"*) nunca vão para o cache. Símbolos de conta viram palavra na chave, então *"1+2"* e *"1-2"* nunca se misturam.
 
 | Origem | Tempo médio |
 |---|---|
@@ -221,7 +221,7 @@ python scripts/carregar_base.py
 | `palavras` | Palavras ignoradas, em teste e bloqueadas (com o motivo) |
 | `desaprende: <palavra>` | Volta a considerar a palavra e conserta o cache |
 | `esqueça: <algo>` | Apaga a lembrança que contém esse trecho |
-| `o que você sabe` | Lista tudo o que o NEXO lembra |
+| `o que você sabe` ou `memória` | Lista tudo o que o NEXO lembra |
 | `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo, tokens, % de economia e palavras aprendidas |
 | `esquece essa resposta` | Para de reaproveitar a última resposta do banco |
 | `ajuda` | Mostra o que o NEXO sabe fazer |
@@ -254,6 +254,7 @@ python scripts/carregar_base.py
 - [x] Respostas locais para ontem, amanhã e depois de amanhã
 - [x] Aprende palavras de enfeite com a IA (votos + lista protegida)
 - [x] Teste de colisão, votos de perguntas diferentes e `desaprende:`
+- [x] Contas soltas (`20+14?`) e travas do cache contra respostas ambíguas
 - [x] Índice do cache pronto para muitos dados
 - [x] Entende abreviações de digitação (pq, q, n, vc, tbm...)
 - [x] Envia só as lembranças relevantes (pronto para memória grande)
