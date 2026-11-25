@@ -10,6 +10,7 @@ __pycache__/
 
 # Banco de memória pessoal
 memory/*.db
+memory/*.db-*
 
 # Logs
 logs/*

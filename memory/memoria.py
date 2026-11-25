@@ -60,6 +60,23 @@ def iniciar_memoria():
         colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(interacoes)")}
         if "emocao" not in colunas:
             conexao.execute("ALTER TABLE interacoes ADD COLUMN emocao TEXT")
+        # Índice parcial: só as respostas que podem sair do cache. A busca vai direto
+        # na chave, não importa quantas interações o banco tenha.
+        conexao.execute("""
+            CREATE INDEX IF NOT EXISTS idx_interacoes_cache
+            ON interacoes (chave, id)
+            WHERE origem = 'ia' AND reutilizavel = 1 AND ativo = 1
+        """)
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS palavras_vazias (
+                palavra TEXT PRIMARY KEY,
+                votos INTEGER NOT NULL DEFAULT 0,
+                ativa INTEGER NOT NULL DEFAULT 0,
+                data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                data_ativacao DATETIME
+            )
+        """)
+        conexao.execute("PRAGMA journal_mode=WAL")
 
 
 CAMPOS_INTERACAO = (
@@ -92,6 +109,62 @@ def buscar_por_chave(chave):
             """,
             (chave,)
         ).fetchone()
+
+
+def palavras_vazias_aprendidas():
+    with conectar() as conexao:
+        return {linha[0] for linha in conexao.execute(
+            "SELECT palavra FROM palavras_vazias WHERE ativa = 1"
+        )}
+
+
+def votar_palavras(palavras, votos_para_ativar):
+    """Soma um voto em cada palavra e devolve as que acabaram de ser ativadas."""
+    with conectar() as conexao:
+        conexao.executemany(
+            """
+            INSERT INTO palavras_vazias (palavra, votos) VALUES (?, 1)
+            ON CONFLICT(palavra) DO UPDATE SET votos = votos + 1
+            """,
+            [(palavra,) for palavra in palavras]
+        )
+        marcador = ", ".join("?" * len(palavras))
+        ativadas = [linha[0] for linha in conexao.execute(
+            f"SELECT palavra FROM palavras_vazias "
+            f"WHERE ativa = 0 AND votos >= ? AND palavra IN ({marcador})",
+            [votos_para_ativar, *palavras]
+        )]
+        conexao.executemany(
+            "UPDATE palavras_vazias SET ativa = 1, data_ativacao = CURRENT_TIMESTAMP WHERE palavra = ?",
+            [(palavra,) for palavra in ativadas]
+        )
+    return ativadas
+
+
+def palavras_vazias_resumo():
+    with conectar() as conexao:
+        return conexao.execute(
+            "SELECT palavra, votos, ativa FROM palavras_vazias ORDER BY ativa DESC, votos DESC"
+        ).fetchall()
+
+
+def interacoes_com_palavra(palavra):
+    """Respostas do cache cuja chave contém a palavra (para refazer a chave)."""
+    with conectar() as conexao:
+        return conexao.execute(
+            """
+            SELECT id, pergunta_normalizada
+            FROM interacoes
+            WHERE origem = 'ia' AND reutilizavel = 1 AND ativo = 1
+              AND ' ' || chave || ' ' LIKE ?
+            """,
+            (f"% {palavra} %",)
+        ).fetchall()
+
+
+def atualizar_chave(id_interacao, chave):
+    with conectar() as conexao:
+        conexao.execute("UPDATE interacoes SET chave = ? WHERE id = ?", (chave, id_interacao))
 
 
 def desativar_interacao(id_interacao):

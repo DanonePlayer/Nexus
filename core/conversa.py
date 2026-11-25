@@ -4,7 +4,7 @@ import re
 import time
 from pathlib import Path
 
-from core.cache import buscar_no_cache, gerar_chave, normalizar
+from core.cache import aprender_palavras, buscar_no_cache, gerar_chave, normalizar
 from core.inteligencia import IaIndisponivel, responder, resumir
 from core.respostas_locais import resposta_local
 from memory.memoria import (
@@ -12,6 +12,7 @@ from memory.memoria import (
     consultar,
     desativar_interacao,
     estatisticas,
+    palavras_vazias_resumo,
     guardar,
     guardar_mensagem,
     guardar_resumo,
@@ -56,6 +57,14 @@ def _mostrar_estatisticas():
         tokens = f", {entrada + saida} tokens" if origem == "ia" else ""
         print(f"- {nomes.get(origem, origem)}: {total} respostas, média {tempo}{tokens}")
 
+    palavras = palavras_vazias_resumo()
+    aprendidas = [palavra for palavra, _, ativa in palavras if ativa]
+    em_teste = [f"{palavra} ({votos})" for palavra, votos, ativa in palavras if not ativa]
+    if aprendidas:
+        print(f"- Palavras de enfeite que aprendi a ignorar: {', '.join(aprendidas)}")
+    if em_teste:
+        print(f"- Ainda em teste (votos): {', '.join(em_teste)}")
+
 
 def _responder_e_registrar(mensagem, normalizado, chave, inicio):
     local = resposta_local(mensagem, normalizado)
@@ -98,6 +107,9 @@ def _responder_e_registrar(mensagem, normalizado, chave, inicio):
 
     if novas:
         print(f"      (guardei na memória: {' | '.join(novas)})")
+
+    for palavra in aprender_palavras(resultado["palavras_irrelevantes"], normalizado):
+        print(f"      (aprendi que '{palavra}' não muda o sentido das perguntas)")
     log.info("modelo=%s reutilizavel=%s emocao=%s memorias_novas=%d",
              resultado["modelo"], resultado["reutilizavel"], resultado["emocao"], len(novas))
     return (resultado["resposta"], id_interacao if reutilizavel else None,

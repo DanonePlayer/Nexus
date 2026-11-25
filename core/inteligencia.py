@@ -51,8 +51,9 @@ ESQUEMA_RESPOSTA = types.Schema(
         "lembrar": types.Schema(type="ARRAY", items=types.Schema(type="STRING")),
         "reutilizavel": types.Schema(type="BOOLEAN"),
         "emocao": types.Schema(type="STRING", enum=EMOCOES),
+        "palavras_irrelevantes": types.Schema(type="ARRAY", items=types.Schema(type="STRING")),
     },
-    required=["resposta", "lembrar", "reutilizavel", "emocao"],
+    required=["resposta", "lembrar", "reutilizavel", "emocao", "palavras_irrelevantes"],
 )
 
 
@@ -155,6 +156,7 @@ def responder(mensagem, historico, memorias, resumo=None):
         "lembrar": [],
         "reutilizavel": False,
         "emocao": "neutro",
+        "palavras_irrelevantes": [],
         "pensamento": pensamento,
         "tokens_entrada": getattr(uso, "prompt_token_count", None),
         "tokens_saida": getattr(uso, "candidates_token_count", None),
@@ -170,4 +172,7 @@ def responder(mensagem, historico, memorias, resumo=None):
     resultado["reutilizavel"] = bool(dados.get("reutilizavel"))
     if dados.get("emocao") in EMOCOES:
         resultado["emocao"] = dados["emocao"]
+    resultado["palavras_irrelevantes"] = [
+        item for item in dados.get("palavras_irrelevantes", []) if isinstance(item, str)
+    ]
     return resultado

@@ -78,7 +78,7 @@ A cada resposta, a própria IA indica se surgiu um fato novo que vale guardar (s
 ### ⚡ Cache inteligente de respostas
 Para gastar menos cota e responder mais rápido, cada mensagem segue esta ordem:
 
-1. **Resposta local**: hora, data, dia da semana, contas (*"quanto é 15 vezes 3"*), cumprimentos, agradecimentos e ajuda, sem internet.
+1. **Resposta local**: hora, data, dia da semana, ontem, amanhã, contas (*"quanto é 15 vezes 3"*), cumprimentos, agradecimentos e ajuda, sem internet.
 2. **Banco**: se a mesma pergunta já foi respondida e é atemporal, devolve do banco.
 3. **IA**: só chama o Gemini se não achou nada.
 
@@ -89,6 +89,23 @@ A própria IA marca se a resposta pode ser reaproveitada: *"qual a capital da Au
 | 🏠 Resposta local | ~0,1 s |
 | 💾 Banco (cache) | ~0,1 s |
 | ☁️ Gemini | 1,5 a 13 s |
+
+### 🧩 Aprende o seu jeito de perguntar
+Para achar a pergunta no banco, o NEXO tira as palavras que não mudam o sentido e monta uma chave:
+
+```text
+"Qual a capital do Japão?"                →  capital japao qual
+"nexo, qual é mesmo a capital do japão?"  →  capital japao qual   ← acha no banco
+```
+
+Além da lista fixa, ele **aprende sozinho**: na mesma chamada da resposta, a IA aponta as palavras de enfeite da pergunta (*"mesmo"*, *"tipo"*, *"aí"*). Cada sugestão é um voto, e a palavra só passa a ser ignorada com **3 votos**. Quando isso acontece, as chaves antigas são refeitas.
+
+Para não estragar o cache, há proteções:
+- A palavra precisa estar na pergunta. A IA não consegue inventar palavras.
+- Negações, palavras de pergunta, de tempo e de comparação (*não, quem, onde, ontem, maior...*) nunca são ignoradas.
+- Se a IA quiser apagar mais da metade da pergunta, a sugestão é descartada.
+
+A busca no banco usa um índice só das respostas reaproveitáveis, então continua instantânea mesmo com milhões de interações.
 
 ### 🛡️ Resistente a falhas da API
 Lista de modelos com reserva: se um modelo estiver sobrecarregado (erro 503), o NEXO tenta o próximo, dando até duas voltas na lista.
@@ -189,7 +206,7 @@ python -m unittest -v
 | `aprenda: <algo>` | Ensina um fato direto, sem usar IA |
 | `esqueça: <algo>` | Apaga a lembrança que contém esse trecho |
 | `o que você sabe` | Lista tudo o que o NEXO lembra |
-| `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo e tokens |
+| `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo, tokens e palavras aprendidas |
 | `esquece essa resposta` | Para de reaproveitar a última resposta do banco |
 | `ajuda` | Mostra o que o NEXO sabe fazer |
 | `sair` | Encerra a conversa |
@@ -218,6 +235,9 @@ python -m unittest -v
 - [x] Resumir conversas antigas para economizar tokens
 - [x] Mais respostas locais e comandos sem IA (contas, cumprimentos, ajuda, `esqueça:`)
 - [x] Emoção em cada resposta (pronta para os olhos e gestos)
+- [x] Respostas locais para ontem, amanhã e depois de amanhã
+- [x] Aprende palavras de enfeite com a IA (votos + lista protegida)
+- [x] Índice do cache pronto para muitos dados
 - [x] Testes automáticos sem IA
 
 ### 🗣️ Fase 2: Voz

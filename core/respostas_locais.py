@@ -2,7 +2,7 @@ import ast
 import operator
 import random
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
@@ -16,6 +16,16 @@ PERGUNTA_DATA = re.compile(
 )
 PERGUNTA_DIA_SEMANA = re.compile(
     r"(nexo )?(que|qual) (e o )?dia da semana (e )?hoje|hoje e que dia da semana"
+)
+DIAS_RELATIVOS = {"anteontem": -2, "ontem": -1, "amanha": 1, "depois de amanha": 2}
+_RELATIVO = r"(?P<{}>depois de amanha|amanha|anteontem|ontem)"
+_VERBO = r"(?:e|foi|era|sera|vai ser|vai cair|cai)"
+PERGUNTA_DIA_RELATIVO = re.compile(
+    r"(?:nexo )?(?:"
+    rf"(?:que|qual) (?:e (?:o |a )?)?(?:dia|dia da semana|data) {_VERBO} {_RELATIVO.format('a')}"
+    rf"|{_RELATIVO.format('b')} {_VERBO} (?:que|qual) (?:dia|dia da semana|data)"
+    rf"|qual (?:e |sera |foi )?a data de {_RELATIVO.format('c')}"
+    r")"
 )
 CUMPRIMENTO = re.compile(r"(oi|ola|ei|eai|e ai|opa|salve|bom dia|boa tarde|boa noite)( nexo)?( tudo bem)?")
 AGRADECIMENTO = re.compile(r"(muito )?(obrigado|obrigada|valeu|vlw|brigado|brigada)( nexo)?( mesmo)?")
@@ -92,6 +102,22 @@ def resolver_conta(mensagem):
     return f"Dá {_formatar_numero(resultado)}."
 
 
+def _data_por_extenso(data):
+    return f"{DIAS[data.weekday()]}, {data.day} de {MESES[data.month - 1]} de {data.year}"
+
+
+def _dia_relativo(normalizado, agora):
+    pedido = PERGUNTA_DIA_RELATIVO.fullmatch(normalizado)
+    if not pedido:
+        return None
+    palavra = pedido.group("a") or pedido.group("b") or pedido.group("c")
+    deslocamento = DIAS_RELATIVOS[palavra]
+    data = agora + timedelta(days=deslocamento)
+    nome = {"amanha": "Amanhã", "depois de amanha": "Depois de amanhã"}.get(palavra, palavra.capitalize())
+    verbo = "vai ser" if deslocamento > 0 else "foi"
+    return f"{nome} {verbo} {_data_por_extenso(data)}."
+
+
 def resposta_local(mensagem, normalizado):
     agora = datetime.now()
     if PERGUNTA_HORA.fullmatch(normalizado):
@@ -99,7 +125,10 @@ def resposta_local(mensagem, normalizado):
     if PERGUNTA_DIA_SEMANA.fullmatch(normalizado):
         return f"Hoje é {DIAS[agora.weekday()]}."
     if PERGUNTA_DATA.fullmatch(normalizado):
-        return f"Hoje é {DIAS[agora.weekday()]}, {agora.day} de {MESES[agora.month - 1]} de {agora.year}."
+        return f"Hoje é {_data_por_extenso(agora)}."
+    relativo = _dia_relativo(normalizado, agora)
+    if relativo:
+        return relativo
     if CUMPRIMENTO.fullmatch(normalizado):
         return random.choice([
             f"{_periodo(agora.hour)}! Tô aqui, pode falar.",
