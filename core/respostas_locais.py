@@ -47,7 +47,7 @@ OPERADORES = {
 AJUDA_TEXTO = (
     "Eu converso com você e lembro das coisas importantes. Comandos: "
     "'aprenda: algo' para eu guardar, 'esqueça: algo' para eu apagar uma lembrança, "
-    "'o que você sabe', 'estatísticas', 'esquece essa resposta' e 'sair'. "
+    "'o que você sabe', 'estatísticas', 'palavras', 'desaprende: palavra', 'esquece essa resposta' e 'sair'. "
     "Hora, data e contas eu respondo na hora, sem usar a IA."
 )
 

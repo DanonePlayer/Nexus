@@ -1,6 +1,6 @@
 import unittest
 
-from core.cache import filtrar_sugestoes, gerar_chave, normalizar
+from core.cache import encontrar_colisao, filtrar_sugestoes, gerar_chave, mesmo_sentido, normalizar
 from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resolver_conta, resposta_local
 
@@ -85,6 +85,30 @@ class TestPalavrasAprendidas(unittest.TestCase):
     def test_desconfia_quando_ia_quer_apagar_quase_tudo(self):
         pergunta = normalizar("capital japao tokyo mesmo")
         self.assertEqual(filtrar_sugestoes(["capital", "japao", "tokyo", "mesmo"], pergunta), set())
+
+
+class TestColisao(unittest.TestCase):
+    def test_palavra_que_muda_sentido_e_barrada(self):
+        respostas = [
+            ("ainda chove em São Paulo?", "Sim, ainda está chovendo forte agora."),
+            ("chove em São Paulo?", "Em São Paulo chove bastante no verão."),
+        ]
+        self.assertIsNotNone(encontrar_colisao("ainda", respostas, aprendidas=set()))
+
+    def test_enfeite_de_verdade_passa(self):
+        respostas = [
+            ("qual a capital do Japão?", "A capital do Japão é Tóquio."),
+            ("qual é mesmo a capital do Japão?", "A capital do Japão é Tóquio, senhor."),
+        ]
+        self.assertIsNone(encontrar_colisao("mesmo", respostas, aprendidas=set()))
+
+    def test_sem_dados_parecidos_passa(self):
+        respostas = [("o que é python", "Python é uma linguagem de programação.")]
+        self.assertIsNone(encontrar_colisao("tipo", respostas, aprendidas=set()))
+
+    def test_mesmo_sentido(self):
+        self.assertTrue(mesmo_sentido("A capital é Tóquio.", "A capital é Tóquio, senhor."))
+        self.assertFalse(mesmo_sentido("Sim, está chovendo.", "Não, faz sol hoje."))
 
 
 class TestContas(unittest.TestCase):

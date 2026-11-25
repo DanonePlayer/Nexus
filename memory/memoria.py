@@ -81,6 +81,19 @@ def iniciar_memoria():
                 data_ativacao DATETIME
             )
         """)
+        colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(palavras_vazias)")}
+        if "bloqueada" not in colunas:
+            conexao.execute("ALTER TABLE palavras_vazias ADD COLUMN bloqueada INTEGER NOT NULL DEFAULT 0")
+            conexao.execute("ALTER TABLE palavras_vazias ADD COLUMN motivo_bloqueio TEXT")
+        # Um voto por pergunta diferente: repetir a mesma pergunta não soma.
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS votos_palavras (
+                palavra TEXT NOT NULL,
+                chave TEXT NOT NULL,
+                data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (palavra, chave)
+            )
+        """)
         conexao.execute("PRAGMA journal_mode=WAL")
 
 
@@ -123,33 +136,76 @@ def palavras_vazias_aprendidas():
         )}
 
 
-def votar_palavras(palavras, votos_para_ativar):
-    """Soma um voto em cada palavra e devolve as que acabaram de ser ativadas."""
+def palavras_bloqueadas():
+    with conectar() as conexao:
+        return {linha[0] for linha in conexao.execute(
+            "SELECT palavra FROM palavras_vazias WHERE bloqueada = 1"
+        )}
+
+
+def votar_palavras(palavras, chave, votos_para_ativar):
+    """Registra um voto por pergunta diferente (chave) e devolve as palavras
+    que chegaram aos votos necessários e ainda precisam do teste de colisão."""
+    palavras = list(palavras)
     with conectar() as conexao:
         conexao.executemany(
+            "INSERT OR IGNORE INTO votos_palavras (palavra, chave) VALUES (?, ?)",
+            [(palavra, chave) for palavra in palavras]
+        )
+        conexao.executemany(
             """
-            INSERT INTO palavras_vazias (palavra, votos) VALUES (?, 1)
-            ON CONFLICT(palavra) DO UPDATE SET votos = votos + 1
+            INSERT INTO palavras_vazias (palavra, votos)
+            VALUES (?, (SELECT COUNT(*) FROM votos_palavras WHERE palavra = ?))
+            ON CONFLICT(palavra) DO UPDATE SET votos = excluded.votos
             """,
-            [(palavra,) for palavra in palavras]
+            [(palavra, palavra) for palavra in palavras]
         )
         marcador = ", ".join("?" * len(palavras))
-        ativadas = [linha[0] for linha in conexao.execute(
+        return [linha[0] for linha in conexao.execute(
             f"SELECT palavra FROM palavras_vazias "
-            f"WHERE ativa = 0 AND votos >= ? AND palavra IN ({marcador})",
+            f"WHERE ativa = 0 AND bloqueada = 0 AND votos >= ? AND palavra IN ({marcador})",
             [votos_para_ativar, *palavras]
         )]
-        conexao.executemany(
+
+
+def ativar_palavra(palavra):
+    with conectar() as conexao:
+        conexao.execute(
             "UPDATE palavras_vazias SET ativa = 1, data_ativacao = CURRENT_TIMESTAMP WHERE palavra = ?",
-            [(palavra,) for palavra in ativadas]
+            (palavra,)
         )
-    return ativadas
+
+
+def bloquear_palavra(palavra, motivo):
+    """Bloqueia para sempre: nunca mais recebe voto nem é ignorada."""
+    with conectar() as conexao:
+        anterior = conexao.execute(
+            "SELECT ativa FROM palavras_vazias WHERE palavra = ?", (palavra,)
+        ).fetchone()
+        conexao.execute(
+            """
+            INSERT INTO palavras_vazias (palavra, ativa, bloqueada, motivo_bloqueio)
+            VALUES (?, 0, 1, ?)
+            ON CONFLICT(palavra) DO UPDATE SET ativa = 0, bloqueada = 1, motivo_bloqueio = excluded.motivo_bloqueio
+            """,
+            (palavra, motivo)
+        )
+    return bool(anterior and anterior[0])
 
 
 def palavras_vazias_resumo():
     with conectar() as conexao:
         return conexao.execute(
-            "SELECT palavra, votos, ativa FROM palavras_vazias ORDER BY ativa DESC, votos DESC"
+            "SELECT palavra, votos, ativa, bloqueada, motivo_bloqueio FROM palavras_vazias "
+            "ORDER BY ativa DESC, bloqueada, votos DESC"
+        ).fetchall()
+
+
+def respostas_do_cache():
+    with conectar() as conexao:
+        return conexao.execute(
+            "SELECT pergunta, resposta FROM interacoes "
+            "WHERE origem = 'ia' AND reutilizavel = 1 AND ativo = 1"
         ).fetchall()
 
 

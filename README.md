@@ -102,12 +102,14 @@ Para achar a pergunta no banco, o NEXO tira as palavras que não mudam o sentido
 
 Abreviações de digitação viram a palavra inteira antes: *"pq"*, *"q"*, *"n"*, *"vc"*, *"tbm"*, *"qntos"*, *"kg"*... Então *"pq o céu é azul"* acha a mesma resposta de *"por que o céu é azul?"*.
 
-Além da lista fixa, ele **aprende sozinho**: na mesma chamada da resposta, a IA aponta as palavras de enfeite da pergunta (*"mesmo"*, *"tipo"*, *"aí"*). Cada sugestão é um voto, e a palavra só passa a ser ignorada com **3 votos**. Quando isso acontece, as chaves antigas são refeitas.
+Além da lista fixa, ele **aprende sozinho**: na mesma chamada da resposta, a IA aponta as palavras de enfeite da pergunta (*"mesmo"*, *"tipo"*, *"aí"*). Cada sugestão é um voto, e a palavra só passa a ser ignorada com **3 votos de perguntas diferentes** (repetir a mesma pergunta não conta). Quando isso acontece, as chaves antigas são refeitas.
 
 Para não estragar o cache, há proteções:
 - A palavra precisa estar na pergunta. A IA não consegue inventar palavras.
 - Negações, palavras de pergunta, de tempo e de comparação (*não, quem, onde, ontem, maior...*) nunca são ignoradas.
 - Se a IA quiser apagar mais da metade da pergunta, a sugestão é descartada.
+- **Teste de colisão:** antes de ativar, o NEXO simula ignorar a palavra no cache real. Se duas perguntas com respostas de sentido diferente passariam a ser a mesma (*"**ainda** chove?"* x *"chove?"*), a palavra é **bloqueada para sempre**.
+- **Tudo é reversível:** `desaprende: palavra` volta a considerar a palavra, bloqueia e conserta todas as chaves. A pergunta original fica sempre guardada.
 
 A busca no banco usa um índice só das respostas reaproveitáveis, então continua instantânea mesmo com milhões de interações.
 
@@ -216,6 +218,8 @@ python scripts/carregar_base.py
 | Comando | O que faz |
 |---|---|
 | `aprenda: <algo>` | Ensina um fato direto, sem usar IA |
+| `palavras` | Palavras ignoradas, em teste e bloqueadas (com o motivo) |
+| `desaprende: <palavra>` | Volta a considerar a palavra e conserta o cache |
 | `esqueça: <algo>` | Apaga a lembrança que contém esse trecho |
 | `o que você sabe` | Lista tudo o que o NEXO lembra |
 | `estatisticas` | Quantas respostas vieram da IA, do banco e locais, com tempo, tokens, % de economia e palavras aprendidas |
@@ -249,6 +253,7 @@ python scripts/carregar_base.py
 - [x] Emoção em cada resposta (pronta para os olhos e gestos)
 - [x] Respostas locais para ontem, amanhã e depois de amanhã
 - [x] Aprende palavras de enfeite com a IA (votos + lista protegida)
+- [x] Teste de colisão, votos de perguntas diferentes e `desaprende:`
 - [x] Índice do cache pronto para muitos dados
 - [x] Entende abreviações de digitação (pq, q, n, vc, tbm...)
 - [x] Envia só as lembranças relevantes (pronto para memória grande)

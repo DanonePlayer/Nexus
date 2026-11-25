@@ -3,11 +3,15 @@ import re
 import unicodedata
 
 from memory.memoria import (
+    ativar_palavra,
     atualizar_chave,
+    bloquear_palavra,
     buscar_por_chave,
     interacoes_com_palavra,
+    palavras_bloqueadas,
     palavras_vazias_aprendidas,
     perguntas_do_cache,
+    respostas_do_cache,
     votar_palavras,
 )
 
@@ -50,6 +54,7 @@ ABREVIACOES = {
 }
 
 VOTOS_PARA_ATIVAR = 3
+SIMILARIDADE_MINIMA = 0.5
 TAMANHO_MAXIMO_PALAVRA = 20
 
 _aprendidas = None
@@ -112,15 +117,77 @@ def filtrar_sugestoes(sugestoes, normalizado):
     return aceitas
 
 
-def aprender_palavras(sugestoes, normalizado):
-    """Registra os votos da IA. Quando uma palavra atinge os votos necessários,
-    passa a ser ignorada e as chaves antigas que a continham são refeitas."""
+def _palavras_da_resposta(texto):
+    return {p for p in normalizar(texto).split() if p not in PALAVRAS_VAZIAS} - {"senhor"}
+
+
+def mesmo_sentido(resposta_a, resposta_b):
+    """Compara duas respostas pelas palavras importantes em comum."""
+    a, b = _palavras_da_resposta(resposta_a), _palavras_da_resposta(resposta_b)
+    if not a or not b:
+        return a == b
+    return len(a & b) / len(a | b) >= SIMILARIDADE_MINIMA
+
+
+def encontrar_colisao(palavra, respostas=None, aprendidas=None):
+    """Simula ignorar a palavra no cache real. Se duas perguntas que hoje são
+    diferentes passariam a ter a mesma chave com respostas de sentido diferente,
+    a palavra muda o sentido: devolve o par de perguntas que provou isso."""
+    respostas = respostas_do_cache() if respostas is None else respostas
+    atuais = _palavras_aprendidas() if aprendidas is None else aprendidas
+    com_palavra = atuais | {palavra}
+
+    grupos = {}
+    for pergunta, resposta in respostas:
+        normalizado = normalizar(pergunta)
+        grupos.setdefault(gerar_chave(normalizado, com_palavra), []).append(
+            (gerar_chave(normalizado, atuais), pergunta, resposta, palavra in normalizado.split())
+        )
+
+    for itens in grupos.values():
+        for chave_a, pergunta_a, resposta_a, tem_palavra in itens:
+            if not tem_palavra:
+                continue
+            for chave_b, pergunta_b, resposta_b, _ in itens:
+                if chave_a != chave_b and not mesmo_sentido(resposta_a, resposta_b):
+                    return pergunta_a, pergunta_b
+    return None
+
+
+def desaprender(palavra):
+    """Para de ignorar a palavra, bloqueia para sempre e refaz todas as chaves."""
     global _aprendidas
-    aceitas = filtrar_sugestoes(sugestoes, normalizado) - _palavras_aprendidas()
+    palavra = normalizar(palavra)
+    estava_ativa = bloquear_palavra(palavra, "bloqueada pelo dono")
+    _aprendidas = palavras_vazias_aprendidas()
+    if estava_ativa:
+        refazer_todas_as_chaves()
+    log.info("Palavra desaprendida e bloqueada: %s", palavra)
+    return estava_ativa
+
+
+def aprender_palavras(sugestoes, normalizado):
+    """Registra os votos da IA (um por pergunta diferente). Quando uma palavra atinge
+    os votos, passa pelo teste de colisão: se passar, é ativada e as chaves antigas
+    são refeitas; se falhar, é bloqueada para sempre."""
+    global _aprendidas
+    aceitas = (
+        filtrar_sugestoes(sugestoes, normalizado) - _palavras_aprendidas() - palavras_bloqueadas()
+    )
     if not aceitas:
         return []
 
-    ativadas = votar_palavras(aceitas, VOTOS_PARA_ATIVAR)
+    candidatas = votar_palavras(aceitas, gerar_chave(normalizado), VOTOS_PARA_ATIVAR)
+    ativadas = []
+    for palavra in candidatas:
+        colisao = encontrar_colisao(palavra)
+        if colisao:
+            motivo = f"colisão: '{colisao[0]}' x '{colisao[1]}'"
+            bloquear_palavra(palavra, motivo)
+            log.warning("Palavra '%s' bloqueada no teste de %s", palavra, motivo)
+            continue
+        ativar_palavra(palavra)
+        ativadas.append(palavra)
     if not ativadas:
         return []
 

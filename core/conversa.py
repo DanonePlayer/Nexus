@@ -4,7 +4,7 @@ import re
 import time
 from pathlib import Path
 
-from core.cache import aprender_palavras, buscar_no_cache, gerar_chave, normalizar
+from core.cache import aprender_palavras, buscar_no_cache, desaprender, gerar_chave, normalizar
 from core.inteligencia import IaIndisponivel, responder, resumir
 from core.lembrancas import selecionar_memorias
 from core.respostas_locais import resposta_local
@@ -39,6 +39,7 @@ TAMANHO_HISTORICO = 20
 LOTE_RESUMO = 20
 # Piada repetida perde a graça e tristeza depende do momento: nunca vão para o cache.
 EMOCOES_NAO_REUTILIZAVEIS = {"brincalhao", "triste"}
+COMANDO_DESAPRENDER = re.compile(r"^desaprend[ae]\s*:\s*(.*)$", re.IGNORECASE)
 COMANDO_APAGAR = re.compile(r"^esque[cç][ae]\s*:\s*(.*)$", re.IGNORECASE)
 COMANDOS_ESQUECER = {"esquece essa resposta", "esqueca essa resposta", "esquece isso", "esqueca isso"}
 
@@ -63,13 +64,25 @@ def _mostrar_estatisticas():
     if total:
         print(f"- Economia: {sem_ia} de {total} respostas ({sem_ia * 100 // total}%) saíram sem usar a IA")
 
-    palavras = palavras_vazias_resumo()
-    aprendidas = [palavra for palavra, _, ativa in palavras if ativa]
-    em_teste = [f"{palavra} ({votos})" for palavra, votos, ativa in palavras if not ativa]
+    aprendidas = [palavra for palavra, _, ativa, _, _ in palavras_vazias_resumo() if ativa]
     if aprendidas:
         print(f"- Palavras de enfeite que aprendi a ignorar: {', '.join(aprendidas)}")
-    if em_teste:
-        print(f"- Ainda em teste (votos): {', '.join(em_teste)}")
+    print("  (digite 'palavras' para ver os detalhes)")
+
+
+def _mostrar_palavras():
+    linhas = palavras_vazias_resumo()
+    aprendidas = [palavra for palavra, _, ativa, _, _ in linhas if ativa]
+    em_teste = [f"{palavra} ({votos}/3)" for palavra, votos, ativa, bloqueada, _ in linhas
+                if not ativa and not bloqueada]
+    bloqueadas = [(palavra, motivo) for palavra, _, _, bloqueada, motivo in linhas if bloqueada]
+    print(f"NEXO: Ignoro estas palavras: {', '.join(aprendidas) or 'nenhuma ainda'}.")
+    print(f"      Em teste (votos de perguntas diferentes): {', '.join(em_teste) or 'nenhuma'}.")
+    if bloqueadas:
+        print("      Bloqueadas (nunca vou ignorar):")
+        for palavra, motivo in bloqueadas:
+            print(f"      - {palavra}: {motivo}")
+    print("      Para eu parar de ignorar uma palavra: 'desaprende: palavra'.")
 
 
 def _responder_e_registrar(mensagem, normalizado, chave, inicio):
@@ -184,6 +197,21 @@ def conversar():
                 print("NEXO: Aprendi e guardei essa informação!")
             else:
                 print("NEXO: Isso eu já sabia!")
+            continue
+
+        if normalizado == "palavras":
+            _mostrar_palavras()
+            continue
+
+        desaprender_pedido = COMANDO_DESAPRENDER.match(mensagem)
+        if desaprender_pedido:
+            palavra = desaprender_pedido.group(1).strip()
+            if not palavra or " " in palavra:
+                print("NEXO: Me diga uma palavra só. Ex.: 'desaprende: mesmo'")
+            elif desaprender(palavra):
+                print(f"NEXO: Pronto, voltei a considerar '{palavra}' e consertei as respostas guardadas.")
+            else:
+                print(f"NEXO: Eu não ignorava '{palavra}', mas agora ela está bloqueada para sempre.")
             continue
 
         apagar = COMANDO_APAGAR.match(mensagem)
